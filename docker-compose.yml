@@ -1,0 +1,43 @@
+services:
+  backend:
+    build: ./backend
+    restart: always
+    command: npm run dev -- --host
+    environment:
+      - DB_HOST=pgbouncer
+    env_file:
+      - ./.env
+    volumes:
+      - ./backend/src:/usr/src/app/src
+    ports:
+      - '80:80'
+    depends_on:
+      - pgbouncer
+  database:
+    image: postgres:16.1-alpine
+    restart: always
+    env_file:
+      - ./.env
+    volumes:
+      - ./data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U master -d node-gpt" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    restart: always
+    env_file:
+      - ./.env
+    environment:
+      - DB_HOST=database
+      - DB_NAME=${POSTGRES_DB}
+      - DB_USER=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - AUTH_TYPE=scram-sha-256
+      - POOL_MODE=transaction
+      - MAX_CLIENT_CONN=1000
+      - DEFAULT_POOL_SIZE=75
+    depends_on:
+      - database
