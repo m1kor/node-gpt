@@ -43,7 +43,7 @@ export class User {
     }
 
     static async fromSession(session: string): Promise<User | null> {
-        if (session!.length > 0) {
+        if (session && session.length > 0) {
             return await AppDataSource.getRepository(User).findOne({ where: { session: session } });
         } else {
             return null;
