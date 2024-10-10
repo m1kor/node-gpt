@@ -136,7 +136,7 @@ app.delete("/api/chats/:id", async (req, res) => {
     where: { user: user, id: Number(req.params.id) },
     relations: ["user"]
   });
-  if (chat?.user.id === user.id) {
+  if (chat?.user.id == user.id) {
     await AppDataSource.getRepository(Message).delete({ chat: chat });
     await AppDataSource.getRepository(Chat).remove(chat);
     res.send({ "detail": "Chat deleted successfully." });
@@ -195,7 +195,7 @@ function preprocess(content: string): string {
     if (line.trim().startsWith("```")) {
       inMultilineCodeBlock = !inMultilineCodeBlock;
     } else if (!inMultilineCodeBlock) {
-      inCodeBlock = inCodeBlock !== ((line.split("`").length - 1) % 2 === 1);
+      inCodeBlock = inCodeBlock !== ((line.split("`").length - 1) % 2 == 1);
     }
   }
 
