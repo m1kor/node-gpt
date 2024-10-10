@@ -71,7 +71,7 @@ app.get("/api/logout", async (req, res) => {
   let session = req.cookies["session"];
   let user = await User.fromSession(session);
   if (user) {
-    user.session = "";
+    user.session = null;
     await AppDataSource.getRepository(User).save(user);
     clearTimeout(User.online[user.id]);
     delete User.online[user.id];
