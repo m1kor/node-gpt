@@ -136,7 +136,7 @@ app.delete("/api/chats/:id", async (req, res) => {
     where: { user: user, id: Number(req.params.id) },
     relations: ["user"]
   });
-  if (chat?.user.id === user.id) {
+  if (chat?.user.id == user.id) {
     await AppDataSource.getRepository(Message).delete({ chat: chat });
     await AppDataSource.getRepository(Chat).remove(chat);
     res.send({ "detail": "Chat deleted successfully." });
@@ -195,7 +195,7 @@ function preprocess(content: string): string {
     if (line.trim().startsWith("```")) {
       inMultilineCodeBlock = !inMultilineCodeBlock;
     } else if (!inMultilineCodeBlock) {
-      inCodeBlock = inCodeBlock !== ((line.split("`").length - 1) % 2 === 1);
+      inCodeBlock = inCodeBlock !== ((line.split("`").length - 1) % 2 == 1);
     }
   }
 
@@ -248,6 +248,19 @@ app.get("/api/stream/:id", async (req, res) => {
     message.role = "assistant";
     message.workflow = workflow;
     message.chat = chat;
+    if (!aborted && chat.messages.length == 1) {
+      const title_prompt = `Summarize the following conversation in 5 words or less:\n\n${chat.messages[0].content}\n\n${message.content}`;
+      const title_completion = await openaiClient.chat.completions.create({
+        model: workflow.model,
+        messages:
+          [{ role: "system", content: workflow.systemPrompt, name: null },
+          { role: "user", content: title_prompt, name: null }],
+        max_tokens: 10
+      });
+      chat.title = title_completion.choices[0].message.content;
+      await AppDataSource.getRepository(Chat).save(chat);
+      res.write(`event: title\ndata: ${chat.title}\n\n`);
+    }
     await AppDataSource.getRepository(Message).save(message);
     if (!aborted) {
       res.write(`event: id\ndata: ${message.id}\n\n`);
